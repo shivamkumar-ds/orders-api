@@ -19,18 +19,6 @@ RATE_LIMIT_WINDOW = 10.0  # seconds
 app = FastAPI()
 
 # --------------------------------------------------------------------------
-# CORS — allow any origin so the grading page can call this directly
-# --------------------------------------------------------------------------
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=False,
-    allow_methods=["GET", "POST", "OPTIONS"],
-    allow_headers=["*"],
-)
-
-
-# --------------------------------------------------------------------------
 # Per-client rate limiting middleware
 # --------------------------------------------------------------------------
 class RateLimitMiddleware(BaseHTTPMiddleware):
@@ -64,6 +52,19 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
 
 app.add_middleware(RateLimitMiddleware, max_requests=RATE_LIMIT_MAX, window_seconds=RATE_LIMIT_WINDOW)
+
+# --------------------------------------------------------------------------
+# CORS — added LAST so it is the OUTERMOST middleware. This guarantees every
+# response (including 429s from the rate limiter above) passes back through
+# CORSMiddleware and gets Access-Control-Allow-Origin attached.
+# --------------------------------------------------------------------------
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=False,
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["*"],
+)
 
 
 # --------------------------------------------------------------------------
